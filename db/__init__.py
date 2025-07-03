@@ -1,0 +1,1 @@
+# Módulo db do Processador de Logs EDI 
