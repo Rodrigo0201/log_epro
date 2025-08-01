@@ -11,10 +11,12 @@ DB_CONFIG = {
     'database': 'SISCNTRHC',
     'username': 'SISCNTRHC',
     'password': 'CtEp@2023',
-    'driver': 'ODBC Driver 17 for SQL Server',
+    'driver': 'ODBC Driver 18 for SQL Server',
     'trusted_connection': 'no',
     'timeout': 30,
-    'charset': 'utf8'
+    'charset': 'utf8',
+    'encrypt': 'no',  # Desabilitar criptografia SSL
+    'trust_server_certificate': 'yes'  # Confiar em certificados auto-assinados
 }
 
 # Configurações do Compartilhamento SMB

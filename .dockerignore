@@ -1,0 +1,59 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+ENV/
+
+# Logs
+logs/
+*.log
+
+# Dados processados
+processed_csvs/
+reports/
+temp_unzipped_logs/
+
+# Banco de dados
+*.db
+*.sqlite
+
+# Configurações locais
+.env
+.env.local
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentação
+README.md
+DOCKER_README.md
+*.md
+
+# Scripts de desenvolvimento
+docker-start.sh
+docker.env.example
+
+# Cache e temporários
+.cache/
+*.tmp
+*.temp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Sistema
+.DS_Store
+Thumbs.db 

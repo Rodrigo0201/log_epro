@@ -25,6 +25,7 @@ def send_data_to_sql(csv_file):
             f"UID={DB_CONFIG['username']};"
             f"PWD={DB_CONFIG['password']};"
             f"Trusted_Connection={DB_CONFIG['trusted_connection']};"
+            f"TrustServerCertificate={DB_CONFIG.get('trust_server_certificate', 'yes')};"
         )
         
         conn = pyodbc.connect(conn_str)
@@ -104,6 +105,7 @@ def remove_duplicated_files():
             f"UID={DB_CONFIG['username']};"
             f"PWD={DB_CONFIG['password']};"
             f"Trusted_Connection={DB_CONFIG['trusted_connection']};"
+            f"TrustServerCertificate={DB_CONFIG.get('trust_server_certificate', 'yes')};"
         )
         
         conn = pyodbc.connect(conn_str)

@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  log-processor:
+    build: .
+    container_name: log_epro_processor
+    restart: unless-stopped
+    privileged: true
+    
+    # Variáveis de ambiente para configuração
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=America/Sao_Paulo
+      # Configurações do banco de dados (podem ser sobrescritas por .env)
+      - DB_SERVER=${DB_SERVER:-192.168.2.15}
+      - DB_DATABASE=${DB_DATABASE:-SISCNTRHC}
+      - DB_USERNAME=${DB_USERNAME:-SISCNTRHC}
+      - DB_PASSWORD=${DB_PASSWORD:-CtEp@2023}
+      # Configurações do SMB
+      - SMB_HOST=${SMB_HOST:-192.168.2.15}
+      - SMB_SHARE=${SMB_SHARE:-Servico Integra}
+      - SMB_USERNAME=${SMB_USERNAME:-rodrigo.cesarino}
+      - SMB_PASSWORD=${SMB_PASSWORD:-R0drigo@147}
+    
+    # Volumes para persistência de dados
+    volumes:
+      # Diretórios locais para processamento
+      - ./logs:/app/logs
+      - ./processed_csvs:/app/processed_csvs
+      - ./reports:/app/reports
+      - ./temp_unzipped_logs:/app/temp_unzipped_logs
+      - ./processed_files.db:/app/processed_files.db
+    
+    # Rede para acesso ao banco externo
+    networks:
+      - log_network
+    
+    # Comando de inicialização
+    command: >
+      sh -c "\
+        mkdir -p /mnt/smb_integra && chmod 777 /mnt/smb_integra && \
+        echo 'Verificando se compartilhamento já está montado...' && \
+        if ! mountpoint -q /mnt/smb_integra; then \
+          echo 'Montando compartilhamento SMB...' && \
+          mount -t cifs \"//${SMB_HOST:-192.168.2.15}/${SMB_SHARE:-Servico Integra}\" /mnt/smb_integra -o username=${SMB_USERNAME:-rodrigo.cesarino},password=${SMB_PASSWORD:-R0drigo@147},vers=3.0,iocharset=utf8,file_mode=0777,dir_mode=0777 && \
+          echo 'Compartilhamento montado com sucesso!'; \
+        else \
+          echo 'Compartilhamento já está montado.'; \
+        fi && \
+        while true; do \
+          echo 'Iniciando processador de logs...' && \
+          python cli/main.py && \
+          echo 'Processamento concluído. Aguardando próximo ciclo...' && \
+          sleep 60; \
+        done
+      "
+    
+    # Configurações de recursos
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    
+    # Configurações de logging
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+
+
+
+
+networks:
+  log_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/16
