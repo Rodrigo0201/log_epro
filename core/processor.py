@@ -10,10 +10,10 @@ import os
 import sqlite3
 from datetime import datetime
 from typing import List, Dict, Any
-from config.settings import LOCAL_CONFIG, SMB_CONFIG, PROCESSING_CONFIG
+from config.settings import LOCAL_CONFIG, SMB_CONFIG, PROCESSING_CONFIG, FTP_CONFIG
 from core.zip_processor import ZipProcessor
 from core.csv_processor import CsvProcessor
-from core.smb_utils import mount_smb_share, unmount_smb_share
+from core.ftp_utils import connect_ftp, disconnect_ftp
 from db.sql_server_client import send_data_to_sql, remove_duplicated_files
 
 class LogProcessor:
@@ -23,7 +23,7 @@ class LogProcessor:
         self.zip_processor = ZipProcessor()
         self.csv_processor = CsvProcessor()
         self.start_time = None
-        self.mounted = False
+        self.ftp_client = None
         self.sql_success_count = 0
         self.sql_error_count = 0
 
@@ -71,10 +71,14 @@ class LogProcessor:
         print("\n📦 PROCESSAMENTO DE ARQUIVOS ZIP")
         print("=" * 50)
         print(f"🎯 Padrão de busca: '{PROCESSING_CONFIG['log_file_pattern']}'")
-        print(f"📁 Diretório: {SMB_CONFIG['mount_point']}")
+        print(f"📁 Servidor FTP: {FTP_CONFIG['host']}:{FTP_CONFIG['port']}")
         
-        # Encontrar arquivos ZIP
-        zip_files = self.zip_processor.find_zip_files(SMB_CONFIG['mount_point'])
+        if not self.ftp_client:
+            print("✗ Cliente FTP não está conectado")
+            return []
+        
+        # Encontrar arquivos ZIP via FTP
+        zip_files = self.ftp_client.list_files(PROCESSING_CONFIG['log_file_pattern'] + '*.zip')
         
         if not zip_files:
             print("ℹ Nenhum arquivo ZIP com padrão 'ConsoleEDI_' encontrado.")
@@ -154,9 +158,10 @@ class LogProcessor:
         print(f"⏰ Início: {self.start_time.strftime('%d/%m/%Y %H:%M:%S')}")
         print("=" * 60)
         
-        # Montar compartilhamento SMB
-        if not mount_smb_share():
-            print("✗ Não foi possível montar o compartilhamento SMB. Abortando.")
+        # Conectar ao servidor FTP
+        self.ftp_client = connect_ftp()
+        if not self.ftp_client:
+            print("✗ Não foi possível conectar ao servidor FTP. Abortando.")
             return False
         
         try:
@@ -169,10 +174,22 @@ class LogProcessor:
             print("ℹ️ Processando apenas arquivos de log 'ConsoleEDI_' diretamente...")
             extracted_files = []
             
-            # Encontrar arquivos de log com padrão ConsoleEDI_ (apenas arquivos diretos)
-            print("\n📄 PROCESSANDO ARQUIVOS DE LOG COM PADRÃO 'ConsoleEDI_'")
-            print("ℹ️ Processando apenas logs que começam com 'ConsoleEDI_'...")
-            all_log_files = self.csv_processor.find_log_files(SMB_CONFIG['mount_point'])
+            # Encontrar e baixar arquivos de log com padrão ConsoleEDI_ via FTP
+            print("\n📄 PROCESSANDO ARQUIVOS DE LOG COM PADRÃO 'ConsoleEDI_' VIA FTP")
+            print("ℹ️ Baixando logs que começam com 'ConsoleEDI_'...")
+            
+            # Baixar arquivos via FTP
+            downloaded_files = self.ftp_client.download_files(
+                PROCESSING_CONFIG['log_file_pattern'],
+                FTP_CONFIG['local_download_dir']
+            )
+            
+            if not downloaded_files:
+                print("ℹ️ Nenhum arquivo foi baixado via FTP")
+                return False
+            
+            # Usar arquivos baixados para processamento
+            all_log_files = downloaded_files
             
             # Processar arquivos CSV
             filtered_csv_files = self.process_csv_files(all_log_files)
@@ -202,7 +219,8 @@ class LogProcessor:
             print(f"\n❌ Erro durante o processamento: {e}")
             return False
         finally:
-            unmount_smb_share()
+            if self.ftp_client:
+                disconnect_ftp(self.ftp_client)
 
     def _save_processing_session(self):
         """Salva informações da sessão de processamento."""

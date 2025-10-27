@@ -33,7 +33,7 @@ processed_files.db
 # Logs
 *.log
 *.Log
-
+*.csv
 # Arquivos temporários
 *.tmp
 *.temp

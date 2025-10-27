@@ -15,6 +15,12 @@ Sistema automatizado para processamento de logs EDI, com separação clara entre
 - **Filtro Rigoroso**: Ignora automaticamente arquivos com outros padrões
 - **Logs Detalhados**: Mostra quais arquivos foram processados e quais foram ignorados
 
+### Conexão FTP
+- **Acesso Remoto**: Conecta ao servidor FTP para baixar arquivos de log
+- **Download Automático**: Baixa automaticamente arquivos com padrão ConsoleEDI_
+- **Modo Passivo**: Suporte a firewalls corporativos
+- **Segurança**: Autenticação por usuário e senha
+
 ### Relatórios e Estatísticas
 - Relatórios diários e semanais em CSV
 - Estatísticas detalhadas de processamento
@@ -143,12 +149,14 @@ DB_CONFIG = {
     # ...
 }
 
-# Compartilhamento SMB
-SMB_CONFIG = {
+# Servidor FTP (substitui SMB)
+FTP_CONFIG = {
     'host': '192.168.2.15',
-    'share': 'logs',
+    'port': 21,
     'username': 'rodrigo.cesarino',
     'password': 'R0drigo@147',
+    'remote_dir': '/logs',
+    'passive_mode': True,
     # ...
 }
 ```
@@ -232,15 +240,18 @@ python cli/main.py --reset
 python cli/remove_duplicates.py clean
 ```
 
-### Problema: Conexão SMB falha
+### Problema: Conexão FTP falha
 
 **Solução:**
 ```bash
 # Verificar conectividade
 ping 192.168.2.15
 
-# Testar credenciais SMB
-smbclient //192.168.2.15/logs -U rodrigo.cesarino
+# Testar conexão FTP
+python test_ftp_connection.py
+
+# Verificar porta FTP
+telnet 192.168.2.15 21
 ```
 
 ### Problema: Conexão SQL Server falha
@@ -265,6 +276,9 @@ python cli/main.py --stats
 
 # Status específico
 python cli/remove_duplicates.py status
+
+# Testar conexão FTP
+python test_ftp_connection.py
 ```
 
 ## 📈 Monitoramento

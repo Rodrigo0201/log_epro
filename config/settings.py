@@ -19,7 +19,7 @@ DB_CONFIG = {
     'trust_server_certificate': 'yes'  # Confiar em certificados auto-assinados
 }
 
-# Configurações do Compartilhamento SMB
+# Configurações do Compartilhamento SMB (LEGADO - pode ser removido)
 # O sistema irá processar apenas arquivos com padrão 'ConsoleEDI_' nesta pasta
 SMB_CONFIG = {
     'host': '192.168.2.15',
@@ -29,6 +29,20 @@ SMB_CONFIG = {
     'mount_point': '/mnt/smb_integra',
     'timeout': 30,
     'retry_attempts': 3
+}
+
+# Configurações do Servidor FTP (NOVO - substitui SMB)
+# O sistema irá baixar arquivos com padrão 'ConsoleEDI_' via FTP
+FTP_CONFIG = {
+    'host': '192.168.2.16',  # Mesmo servidor, mas via FTP
+    'port': 23,               # Porta padrão FTP
+    'username': 'contrail',
+    'password': 'contrail',
+    'remote_dir': '/',    # Diretório raiz onde estão os logs
+    'timeout': 30,
+    'passive_mode': True,     # Modo passivo (recomendado para firewalls)
+    'retry_attempts': 3,
+    'local_download_dir': 'temp_unzipped_logs'  # Diretório local para downloads
 }
 
 # Configurações Locais

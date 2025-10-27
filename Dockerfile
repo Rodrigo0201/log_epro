@@ -14,8 +14,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     gnupg2 \
-    cifs-utils \
-    mount \
+    # cifs-utils e mount removidos - não mais necessários para FTP \
     && rm -rf /var/lib/apt/lists/*
 
 # Adicionar chave Microsoft e repositório SQL Server (método correto para Debian 12)
